@@ -24,9 +24,10 @@ export const C_WINDIR = [
 
 export const VARIABLE_LIST = {
 	l_name: { description: 'Location Name', section: '', data: 'name' },
-	//l_region: { description: 'Region or State (if available)', section: 'location', data: 'region' },
+	l_region: { description: 'Region or State (if available)', section: 'sys', data: 'region' },
 	l_country: { description: 'Country', section: 'sys', data: 'country' },
-	//l_localtime: { description: 'Local Time', section: 'location', data: 'dt' },
+	l_localtime: { description: 'Local Time', section: '', data: '' },
+	l_timeoffset: { description: 'UTC Offset (minutes)', section: '', data: 'timezone' },
 	c_time: { description: 'Time last updated', section: 'time', data: 'dt' },
 	c_sunrise: { description: 'Sunrise', section: 'time', data: 'sys.sunrise' },
 	c_sunset: { description: 'Sunset', section: 'time', data: 'sys.sunset' },
