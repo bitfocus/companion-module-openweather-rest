@@ -1,6 +1,6 @@
 /* eslint-disable no-useless-escape */
 
-// OpenWeather.com interface
+// openweathermap.org interface
 
 import { combineRgb, Regex } from '@companion-module/base'
 import { runEntrypoint, InstanceBase, InstanceStatus } from '@companion-module/base'
@@ -52,6 +52,10 @@ class OWInstance extends InstanceBase {
 	 * @since 2.0.0
 	 */
 	async init(config) {
+		if (config.tz == null) {
+			config.tz = 'h'
+			this.saveConfig(config)
+		}
 		this.config = config
 		this.init_vars()
 
@@ -117,14 +121,14 @@ class OWInstance extends InstanceBase {
 				width: 12,
 				label: 'Information',
 				value:
-					'This module retrieves weather information from OpenWeather.com.<br>It requires an active internet connection.',
+					'This module retrieves weather information from OpenWeathermap.org.<br>It requires an active internet connection.',
 			},
 			{
 				type: 'textinput',
 				id: 'apikey',
 				label: 'API Key',
 				width: 12,
-				tooltip: 'Enter your API Key from OpenWeather.com.',
+				tooltip: 'Enter your API Key from OpenWeathermap.com.',
 				regex: this.REGEX_HEX,
 			},
 			{
@@ -143,6 +147,18 @@ class OWInstance extends InstanceBase {
 				choices: [
 					{ id: 'i', label: 'Fahrenheit and MPH' },
 					{ id: 'm', label: 'Celsius and kPH' },
+				],
+			},
+			{
+				type: 'dropdown',
+				id: 'tz',
+				label: 'Timezone',
+				width: 6,
+				default: 'l',
+				choices: [
+					{ id: 'l', label: 'Times use location configured above' },
+					{ id: 'h', label: 'Times use local (Companion) time' },
+					{ id: 'u', label: 'Times are UTC' },
 				],
 			},
 			{
@@ -364,15 +380,25 @@ class OWInstance extends InstanceBase {
 		let tz = data.timezone
 		const p0 = this.pad0
 
+		switch (this.config.tz) {
+			case 'h': // here
+				const now = new Date()
+				tz = -now.getTimezoneOffset() * 60 // convert to seconds
+				break
+			case 'u': // UTC
+				tz = 0
+				break
+		}
+
 		this.weather = data
 
 		// Additional 'date' formatting functions
 		Date.prototype.toHHMM = function () {
-			return p0(this.getHours()) + ':' + p0(this.getMinutes())
+			return p0(this.getUTCHours()) + ':' + p0(this.getUTCMinutes())
 		}
 
 		Date.prototype.toMMDD_HHMM = function () {
-			return p0(this.getMonth() + 1) + '-' + p0(this.getDate()) + ' ' + this.toHHMM()
+			return p0(this.getUTCMonth() + 1) + '-' + p0(this.getUTCDate()) + ' ' + this.toHHMM()
 		}
 
 		function kelvinToUnit(units, p) {
@@ -422,10 +448,18 @@ class OWInstance extends InstanceBase {
 
 		for (let i in v) {
 			let k = v[i].section
-			let p = (data[k] ? data[k][v[i].data]: data[v[i].data])
+			let p = data[k] ? data[k][v[i].data] : data[v[i].data]
 			switch (k) {
 				case '':
-					dv = data[v[i].data]
+					if ('l_localtime' == i) {
+						const now = new Date()
+						const utc = now.getTime() // Convert local time to UTC
+						dv = new Date()
+						dv.setTime(utc + tz * 1000)
+						dv = dv.toMMDD_HHMM() // Add the offset in milliseconds
+					} else {
+						dv = data[v[i].data]
+					}
 					break
 				case 'local':
 					switch (i) {
@@ -465,7 +499,7 @@ class OWInstance extends InstanceBase {
 					dv = data[k][v[i].data]
 					break
 				case 'wind':
-					dv = speedToUnit(i.slice(-1),data[k][v[i].data])
+					dv = speedToUnit(i.slice(-1), data[k][v[i].data])
 					break
 				case 'weather':
 					dv = data.weather[0][v[i].data]
@@ -482,15 +516,19 @@ class OWInstance extends InstanceBase {
 					}
 					break
 				case 'time':
+					let d = new Date()
 					switch (i) {
 						case 'c_time':
-							dv = new Date(dt * 1000).toMMDD_HHMM()
+							d.setTime((dt + tz) * 1000)
+							dv = d.toMMDD_HHMM()
 							break
 						case 'c_sunrise':
-							dv = new Date(data.sys.sunrise * 1000).toHHMM()
+							d.setTime((data.sys.sunrise + tz) * 1000)
+							dv = d.toHHMM()
 							break
 						case 'c_sunset':
-							dv = new Date(data.sys.sunset * 1000).toHHMM()
+							d.setTime((data.sys.sunset + tz) * 1000)
+							dv = d.toHHMM()
 							break
 					}
 					break
