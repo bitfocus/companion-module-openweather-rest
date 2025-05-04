@@ -18,13 +18,13 @@ Contributions for maintenance and development of this open source module are alw
 
 ## Configuration
 
-| **Setting**               | **Description**                                                                               |
-| ------------------------- | --------------------------------------------------------------------------------------------- |
-| **API Key**               | Enter your API Key from OpenWeather                                                           |
-| **Location**              | Enter the weather location <sup>\*2</sup>                                                     |
-| **~~Measurement Units~~** | ~~Select to display Celsius & kPH, otherwise Fahrenheit & MPH~~<sup>\*4</sup>                 |
-| **Timezone**              | Select timezone for variables (here, there, UTC). Defaults to 'Here' to match prior releases. |
-| **Refresh Frequency**     | How often to update the weather info in Minutes                                               |
+| **Setting**           | **Description**                                                                               |
+| --------------------- | --------------------------------------------------------------------------------------------- |
+| **API Key**           | Enter your API Key from OpenWeather                                                           |
+| **Location**          | Enter the weather location <sup>\*2</sup>                                                     |
+| **Measurement Units** | Default variables use Celsius & kPH, otherwise Fahrenheit & MPH                               |
+| **Timezone**          | Select timezone for variables (here, there, UTC). Defaults to 'Here' to match prior releases. |
+| **Refresh Frequency** | How often to update the weather info in Minutes                                               |
 
 ---
 
@@ -100,7 +100,3 @@ Replace `ow` with the actual instance label.
 
 - Add a comma "," and a 2 character country code to specify which City: "Paris,FR"
 - Add a comma "," and a 2 character state code followed by another comma and a 2 character country code to specify which City: "Paris,TX,US"
-
----
-
-<sup>\*4</sup> Variables are available for all units so this option is not required.

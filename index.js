@@ -4,7 +4,7 @@
 
 import { combineRgb, Regex } from '@companion-module/base'
 import { runEntrypoint, InstanceBase, InstanceStatus } from '@companion-module/base'
-import Jimp from 'jimp'
+import { Jimp, JimpMime } from 'jimp'
 import { UpgradeScripts } from './upgrades.js'
 import rest_pkg from 'node-rest-client'
 const rest_client = rest_pkg.Client
@@ -253,13 +253,12 @@ class OWInstance extends InstanceBase {
 	 * @since 2.0.0
 	 */
 	init_presets() {
-		const presets = [
-			{
+		const presets = {
+			'pic-and-temp': {
 				type: 'button',
 				category: 'Example',
-				label: 'Condition Graphic & Current Temp',
-				bank: {
-					style: 'png',
+				name: 'Condition Graphic & Current Temp',
+				style: {
 					text: '$(ow:c_text)\\n$(ow:c_temp)',
 					size: '18',
 					color: combineRgb(255, 255, 255),
@@ -273,12 +272,13 @@ class OWInstance extends InstanceBase {
 				],
 				feedbacks: [
 					{
-						type: 'icon',
+						feedbackId: 'icon',
+						style: {},
 						options: {},
 					},
 				],
 			},
-		]
+		}
 		this.setPresetDefinitions(presets)
 	}
 
@@ -561,7 +561,7 @@ class OWInstance extends InstanceBase {
 					.get(`http://openweathermap.org/img/wn/${code}@2x.png`, async (data, response) => {
 						if (response.statusCode == 200) {
 							const image = await Jimp.read(Buffer.from(data))
-							const png = await image.scaleToFit(72, 72).getBase64Async(Jimp.MIME_PNG)
+							const png = await image.scaleToFit({ w: 72, h: 72 }).getBase64(JimpMime.png)
 							this.icons[code] = png
 							this.checkFeedbacks('icon')
 						}
