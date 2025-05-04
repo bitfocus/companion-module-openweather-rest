@@ -1,6 +1,6 @@
 {
 	"name": "openweather-rest",
-	"version": "3.1.1",
+	"version": "3.1.2",
 	"type": "module",
 	"main": "index.js",
 	"scripts": {
@@ -18,5 +18,11 @@
 	},
 	"devDependencies": {
 		"@companion-module/tools": "^2.3.0"
+	},
+	"overrides": {
+		"simple-xml-to-json": "1.2.2"
+	},
+	"resolutions": {
+		"simple-xml-to-json": "1.2.2"
 	}
 }
