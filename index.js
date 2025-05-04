@@ -20,21 +20,30 @@ import { BASE_URL, C_DEGREE, C_WINDIR, VARIABLE_LIST } from './constants.js'
  * @since 2.0.0
  * @author John A Knight, Jr <istnv@istnv.com>
  */
+
+/**
+ * add leading chacters/zeros to num, trim to len
+ * -- this will truncate num if it has more than 'len' digits
+ *
+ * @param {number} num  Number to pad
+ * @param {number} [len = 2]  Pad to this length
+ * @param {char} [pad = '0']  Pad with this character
+ * @returns Character padded number string
+ */
+
+function pad0(num, len = 2, pad = '0') {
+	return (pad.repeat(len) + `${num}`).slice(-len)
+}
+
+// Additional 'date' formatting functions
+Date.prototype.toHHMM = function () {
+	return pad0(this.getUTCHours()) + ':' + pad0(this.getUTCMinutes())
+}
+
+Date.prototype.toMMDD_HHMM = function () {
+	return pad0(this.getUTCMonth() + 1) + '-' + pad0(this.getUTCDate()) + ' ' + this.toHHMM()
+}
 class OWInstance extends InstanceBase {
-	/**
-	 * add leading zeros to num, trim to len
-	 * -- this will truncate num if it has more than 'len' digits
-	 *
-	 * @param {*} num
-	 * @param {*} len
-	 * @returns
-	 */
-
-	pad0(num, len = 2) {
-		const zeros = '0'.repeat(len)
-		return (zeros + num).slice(-len)
-	}
-
 	/**
 	 * Create an instance of the openweather-api module
 	 *
@@ -241,6 +250,7 @@ class OWInstance extends InstanceBase {
 		this.iconID = ''
 		this.mph = 'i' == this.config.units
 		this.hasError = false
+		this.tz = 0
 		for (let i in VARIABLE_LIST) {
 			vars.push({ variableId: i, name: VARIABLE_LIST[i].description })
 		}
@@ -316,6 +326,25 @@ class OWInstance extends InstanceBase {
 		}, 60000)
 		// starting now :)
 		this.refresh()
+		this.update_localtimes()
+	}
+
+	/**
+	 * update local time variables
+	 */
+	update_localtimes() {
+		let dv = ''
+		let vars = {}
+
+		for (const i of ['l_localtime', 'l_time']) {
+			const now = new Date()
+			const utc = now.getTime() // Convert local time to UTC
+			dv = new Date()
+			dv.setTime(utc + this.tz * 1000) // Add the offset in milliseconds
+			dv = 'l_time' == i ? dv.toHHMM() : (dv = dv.toMMDD_HHMM())
+			vars[i] = dv
+		}
+		this.setVariableValues(vars)
 	}
 
 	/**
@@ -329,6 +358,8 @@ class OWInstance extends InstanceBase {
 		if (short <= 0) {
 			this.refresh()
 		}
+		// always refresh 'local' TOD
+		this.update_localtimes()
 	}
 
 	/**
@@ -378,6 +409,7 @@ class OWInstance extends InstanceBase {
 		let dt = data.dt
 		let vars = {}
 		let tz = data.timezone
+		this.tz = tz
 		const p0 = this.pad0
 
 		switch (this.config.tz) {
@@ -391,15 +423,6 @@ class OWInstance extends InstanceBase {
 		}
 
 		this.weather = data
-
-		// Additional 'date' formatting functions
-		Date.prototype.toHHMM = function () {
-			return p0(this.getUTCHours()) + ':' + p0(this.getUTCMinutes())
-		}
-
-		Date.prototype.toMMDD_HHMM = function () {
-			return p0(this.getUTCMonth() + 1) + '-' + p0(this.getUTCDate()) + ' ' + this.toHHMM()
-		}
 
 		function kelvinToUnit(units, p) {
 			let ret
@@ -451,12 +474,9 @@ class OWInstance extends InstanceBase {
 			let p = data[k] ? data[k][v[i].data] : data[v[i].data]
 			switch (k) {
 				case '':
-					if ('l_localtime' == i) {
-						const now = new Date()
-						const utc = now.getTime() // Convert local time to UTC
-						dv = new Date()
-						dv.setTime(utc + tz * 1000)
-						dv = dv.toMMDD_HHMM() // Add the offset in milliseconds
+					if (['l_localtime', 'l_time'].includes(i)) {
+						// happens in pulse()
+						continue
 					} else {
 						dv = data[v[i].data]
 					}
