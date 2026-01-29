@@ -17,7 +17,7 @@
 		"node-rest-client": "^3.1.1"
 	},
 	"devDependencies": {
-		"@companion-module/tools": "^2.3.0"
+		"@companion-module/tools": "^2.6.1"
 	},
 	"overrides": {
 		"simple-xml-to-json": "1.2.2"
